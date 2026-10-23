@@ -1,0 +1,21 @@
+codigo_servicio,servicio,categoria,medicaciones_referencia,valor_min_referencia,valor_max_referencia,cubre_sistema_publico
+COV-001,Consulta de medicina general,Consulta,acetaminofén|ibuprofeno|omeprazol|loratadina,35000,95000,SI
+COV-002,Consulta de pediatría básica,Consulta,acetaminofén|salbutamol|amoxicilina|loratadina,45000,110000,SI
+COV-003,Consulta de control prenatal,Prevención,ácido fólico|sulfato ferroso|calcio|vitamina D,60000,140000,SI
+COV-004,Vacunación esquema regular,Prevención,vacuna influenza|vacuna tétanos|vacuna hepatitis B|vacuna triple viral,25000,85000,SI
+COV-005,Terapia física ambulatoria,Rehabilitación,naproxeno|acetaminofén|diclofenaco tópico|ciclobenzaprina,70000,180000,SI
+COV-006,Hemograma completo,Diagnóstico,ninguna,28000,76000,SI
+COV-007,Radiografía simple,Diagnóstico,ninguna,50000,150000,SI
+COV-008,Ecografía abdominal básica,Diagnóstico,ninguna,90000,220000,SI
+COV-009,Control de hipertensión arterial,Crónicos,losartán|amlodipino|hidroclorotiazida|enalapril,50000,130000,SI
+COV-010,Control de diabetes mellitus,Crónicos,metformina|glibenclamida|insulina NPH|dapagliflozina,70000,160000,SI
+COV-011,Insulinoterapia ambulatoria,Crónicos,insulina glargina|insulina lispro|metformina|tiras reactivas,120000,280000,SI
+COV-012,Tratamiento de infección respiratoria aguda,Tratamiento,amoxicilina|azitromicina|acetaminofén|salbutamol,65000,210000,SI
+COV-013,Suministro de antihipertensivos,Medicamentos,losartán|amlodipino|enalapril|hidroclorotiazida,40000,125000,SI
+COV-014,Suministro de antidiabéticos orales,Medicamentos,metformina|glimepirida|sitagliptina|dapagliflozina,50000,135000,SI
+COV-015,Atención de urgencias priorizadas,Urgencias,tramadol|ketorolaco|ondansetrón|suero salino,150000,420000,SI
+COV-016,Curación de heridas simple,Procedimiento,clorhexidina|gasas estériles|mupirocina|acetaminofén,55000,145000,SI
+COV-017,Rehabilitación postoperatoria básica,Rehabilitación,naproxeno|acetaminofén|diclofenaco tópico|heparina tópica,100000,260000,SI
+COV-018,Mamografía de tamizaje,Prevención,ninguna,90000,230000,SI
+COV-019,Citología cervicouterina,Prevención,ninguna,45000,105000,SI
+COV-020,Control ambulatorio de salud mental,Consulta,sertralina|fluoxetina|clonazepam|melatonina,85000,220000,SI

@@ -1,0 +1,149 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Plantilla CloudFormation para la Solución Distribuida de Procesamiento Masivo
+  de Órdenes Médicas en AWS (Sistema de Salud de Chernovia - Reto COIL).
+  Despliega S3 Data Lake (Bronze/Gold/Quarantine), Glue Data Catalog, Glue Job Spark y Athena.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: coil-bigdata-salud
+    Description: Prefijo para los recursos del proyecto.
+
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, test, prod]
+    Description: Entorno de despliegue.
+
+  LabRoleArn:
+    Type: String
+    Default: arn:aws:iam::123456789012:role/LabRole
+    Description: ARN del rol de IAM para el AWS Academy Learner Lab (LabRole).
+
+  GlueWorkerType:
+    Type: String
+    Default: G.1X
+    AllowedValues: [G.1X, G.2X]
+    Description: Tipo de worker de AWS Glue (G.1X = 1 DPU = 4 vCPU, 16 GB).
+
+  GlueNumberOfWorkers:
+    Type: Number
+    Default: 2
+    MinValue: 2
+    MaxValue: 10
+    Description: Número de workers para la corrida masiva (2 a 10 workers).
+
+Resources:
+
+  # ---------------------------------------------------------------------------
+  # 1. ALMACENAMIENTO: S3 Data Lake Multi-Capa con Cifrado y Ciclo de Vida
+  # ---------------------------------------------------------------------------
+  DataLakeBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${ProjectName}-datalake-${AWS::AccountId}-${Environment}"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: MoveOldRawDataToGlacier
+            Status: Enabled
+            Prefix: bronze/
+            Transitions:
+              - TransitionInDays: 90
+                StorageClass: GLACIER
+          - Id: CleanAthenaTempResults
+            Status: Enabled
+            Prefix: athena-results/
+            ExpirationInDays: 7
+
+  # ---------------------------------------------------------------------------
+  # 2. CATÁLOGO DE METADATOS: AWS Glue Database
+  # ---------------------------------------------------------------------------
+  GlueDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: !Sub "${ProjectName}_db"
+        Description: Catalogo de datos para auditoria y analisis de ordenes medicas
+
+  # ---------------------------------------------------------------------------
+  # 3. PROCESAMIENTO DISTRIBUIDO: AWS Glue PySpark Job (Apache Spark 3.3+)
+  # ---------------------------------------------------------------------------
+  GlueJobProcessor:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-spark-batch-processor"
+      Description: Job distribuido en Spark para clasificacion y calculo de cobertura de 12M de ordenes
+      Role: !Ref LabRoleArn
+      GlueVersion: "4.0"
+      WorkerType: !Ref GlueWorkerType
+      NumberOfWorkers: !Ref GlueNumberOfWorkers
+      Timeout: 120
+      MaxRetries: 0
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      Command:
+        Name: glueetl
+        ScriptLocation: !Sub "s3://${DataLakeBucket}/scripts/aws_glue_job.py"
+        PythonVersion: "3"
+      DefaultArguments:
+        "--job-language": "python"
+        "--JOB_NAME": !Sub "${ProjectName}-spark-batch-processor"
+        "--S3_BUCKET_NAME": !Ref DataLakeBucket
+        "--SOURCE_PREFIX": "bronze/solicitudes/"
+        "--TARGET_PREFIX": "gold/curated_solicitudes/"
+        "--QUARANTINE_PREFIX": "quarantine/solicitudes/"
+        "--VERSION_CATALOGO": "2026.1"
+        "--enable-metrics": "true"
+        "--enable-continuous-cloudwatch-log": "true"
+        "--enable-spark-ui": "true"
+        "--spark-event-logs-path": !Sub "s3://${DataLakeBucket}/spark-logs/"
+        "--TempDir": !Sub "s3://${DataLakeBucket}/temp/"
+
+  # ---------------------------------------------------------------------------
+  # 4. MOTOR DE CONSULTA: Amazon Athena WorkGroup
+  # ---------------------------------------------------------------------------
+  AthenaWorkGroup:
+    Type: AWS::Athena::WorkGroup
+    Properties:
+      Name: !Sub "${ProjectName}-analytics-wg"
+      Description: WorkGroup para consultas y auditorias SQL con Amazon Athena
+      State: ENABLED
+      WorkGroupConfiguration:
+        EnforceWorkGroupConfiguration: true
+        PublishCloudWatchMetricsEnabled: true
+        ResultConfiguration:
+          OutputLocation: !Sub "s3://${DataLakeBucket}/athena-results/"
+          EncryptionConfiguration:
+            EncryptionOption: SSE_S3
+
+Outputs:
+  BucketName:
+    Description: Nombre del Bucket de S3 Data Lake creado
+    Value: !Ref DataLakeBucket
+    Export:
+      Name: !Sub "${ProjectName}-BucketName"
+
+  GlueDatabaseName:
+    Description: Nombre de la base de datos de Glue
+    Value: !Ref GlueDatabase
+
+  GlueJobName:
+    Description: Nombre del Job distribuido en Glue
+    Value: !Ref GlueJobProcessor
+
+  AthenaWorkGroupName:
+    Description: Nombre del WorkGroup de Athena
+    Value: !Ref AthenaWorkGroup

@@ -1,0 +1,4 @@
+perfil_cobertura,porcentaje_cobertura_si_el_servicio_esta_cubierto,descripcion
+PRIORITARIO,100,Cobertura total para población prioritaria
+ESTANDAR,50,Cobertura parcial media para población general
+COPAGO,25,Cobertura parcial baja con copago extendido
