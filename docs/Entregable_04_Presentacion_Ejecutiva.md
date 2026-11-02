@@ -11,6 +11,8 @@
 * **Título:** Arquitectura Distribuida en la Nube para la Liquidación Masiva y Confiable de Órdenes Médicas.
 * **Subtítulo:** Licitación Técnica de Big Data y Metodología de la Investigación (Proyecto COIL).
 * **Equipo:** Representantes de Big Data y Metodología de la Investigación (Universidad Pontificia Bolivariana - UPB).
+* **Demostración en Vivo (AWS Learner Lab):** [http://3.208.9.185](http://3.208.9.185) (Login: `admin` / `coil2026`)
+* **API REST & Swagger:** [http://3.208.9.185/docs](http://3.208.9.185/docs)
 * **Mensaje Clave:** Cómo procesar 12 millones de trámites en menos de 2 horas con auditoría criptográfica y a un costo inferior a 10 centavos de dólar.
 
 ### Diapositiva 2: La Magnitud del Reto y el Impacto Fiscal

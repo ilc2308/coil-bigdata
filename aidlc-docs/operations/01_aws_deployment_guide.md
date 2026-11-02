@@ -4,6 +4,15 @@
 
 ---
 
+## 🌐 Enlaces de Acceso al Despliegue Activo en AWS
+
+* 🖥️ **Dashboard Web:** [http://3.208.9.185](http://3.208.9.185)
+* 📑 **Documentación Interactiva (Swagger):** [http://3.208.9.185/docs](http://3.208.9.185/docs)
+* 💓 **Health Check:** [http://3.208.9.185/health](http://3.208.9.185/health)
+* 🔐 **Credenciales:** `admin` / `coil2026`
+
+---
+
 ## 1. Consideraciones del Entorno AWS Academy Learner Lab
 
 El entorno del Learner Lab cuenta con restricciones particulares que fueron contempladas en el diseño:

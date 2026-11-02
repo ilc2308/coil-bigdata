@@ -1,7 +1,22 @@
 # ENTREGABLE 03: IMPLEMENTACIÓN Y EVIDENCIAS EXPERIMENTALES (25%)
 **Proyecto COIL Interdisciplinario:** Big Data y Metodología de la Investigación  
+**Institución:** Universidad Pontificia Bolivariana (UPB)  
 **Tema:** Diseño e implementación de una solución distribuida en la nube para el procesamiento masivo de órdenes médicas  
 **Entregable:** Prototipo Funcional, Código Fuente, Pruebas y Evidencias de Resultados
+
+---
+
+## 🌐 Enlaces de Acceso al Prototipo Desplegado en AWS Learner Lab
+
+El prototipo funcional se encuentra desplegado y accesible públicamente para evaluación:
+
+* 🖥️ **Dashboard Web (Streamlit):** [http://3.208.9.185](http://3.208.9.185)
+* 📑 **API REST y Documentación Interactiva (Swagger):** [http://3.208.9.185/docs](http://3.208.9.185/docs)
+* 💓 **Health Check del Sistema:** [http://3.208.9.185/health](http://3.208.9.185/health)
+
+### 🔐 Credenciales de Inicio de Sesión
+* **Usuario:** `admin`
+* **Contraseña:** `coil2026`
 
 ---
 
