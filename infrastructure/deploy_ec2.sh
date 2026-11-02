@@ -61,7 +61,7 @@ if [ -d "$REPO_DIR" ]; then
 else
     echo "  Clonando repositorio..."
     # Reemplaza con la URL real de tu repositorio
-    git clone https://github.com/<tu-usuario>/proyecto-coil-bigdata.git "$REPO_DIR"
+    git clone https://github.com/ilc2308/coil-bigdata.git "$REPO_DIR"
     cd "$REPO_DIR"
 fi
 
@@ -69,16 +69,18 @@ fi
 echo "[5/7] Configurando .env..."
 if [ ! -f .env ]; then
     cp .env.example .env
-    echo "  ⚠️  .env creado desde .env.example."
-    echo "  EDITA .env con tu usuario, contraseña y credenciales antes de continuar."
-    echo ""
-    echo "  Campos mínimos a editar:"
-    echo "    APP_USERNAME, APP_PASSWORD, JWT_SECRET_KEY"
-    echo ""
-    read -p "  ¿Ya editaste .env? [s/N]: " confirm
-    if [[ "$confirm" != "s" && "$confirm" != "S" ]]; then
-        echo "  Edita .env y vuelve a ejecutar el script."
-        exit 1
+    if command -v openssl &> /dev/null; then
+        RANDOM_KEY=$(openssl rand -hex 24)
+        sed -i "s/cambia_esta_clave_secreta_en_produccion/$RANDOM_KEY/" .env 2>/dev/null || true
+    fi
+    echo "  ⚠️  .env generado desde .env.example."
+    if [ "$1" != "-y" ] && [ -t 0 ]; then
+        echo "  Credenciales por defecto: admin / coil2026"
+        read -p "  ¿Deseas continuar con estas credenciales? [S/n]: " confirm
+        if [[ "$confirm" =~ ^[nN]$ ]]; then
+            echo "  Edita .env y vuelve a ejecutar el script."
+            exit 1
+        fi
     fi
 fi
 
