@@ -1,0 +1,98 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Despliegue de la Aplicacion Web COIL Big Data (Streamlit + FastAPI + Nginx en Docker)
+  optimizada para AWS Academy Learner Lab.
+
+Parameters:
+  InstanceType:
+    Type: String
+    Default: t3.medium
+    AllowedValues:
+      - t3.small
+      - t3.medium
+      - t3.large
+      - t2.medium
+    Description: Tipo de instancia EC2. Se recomienda t3.medium para construccion rapida de Docker.
+
+  LatestAmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp3/ami-id'
+    Description: AMI oficial mas reciente de Ubuntu 22.04 LTS en la region.
+
+Resources:
+  # ---------------------------------------------------------------------------
+  # 1. SECURITY GROUP: HTTP (80) y SSH (22)
+  # ---------------------------------------------------------------------------
+  WebSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group para el Dashboard y API de COIL Big Data
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: Acceso Web HTTP para Nginx (Streamlit y FastAPI)
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          Description: Acceso SSH y EC2 Instance Connect
+
+  # ---------------------------------------------------------------------------
+  # 2. INSTANCIA EC2 CON DOCKER Y COIL BIG DATA
+  # ---------------------------------------------------------------------------
+  CoilEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref LatestAmiId
+      IamInstanceProfile: LabInstanceProfile
+      SecurityGroupIds:
+        - !GetAtt WebSecurityGroup.GroupId
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 25
+            VolumeType: gp3
+            DeleteOnTermination: true
+      Tags:
+        - Key: Name
+          Value: coil-bigdata-web-server
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -e
+          exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
+          echo "============================================="
+          echo "Iniciando instalacion automatica COIL Web..."
+          echo "============================================="
+
+          # Instalar dependencias basicas
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -y
+          apt-get install -y git curl ca-certificates gnupg lsb-release
+
+          # Clonar repositorio
+          TARGET_DIR="/home/ubuntu/coil-bigdata"
+          git clone https://github.com/ilc2308/coil-bigdata.git "$TARGET_DIR"
+          chown -R ubuntu:ubuntu "$TARGET_DIR"
+
+          # Ejecutar despliegue
+          cd "$TARGET_DIR"
+          chmod +x infrastructure/deploy_ec2.sh
+          sudo -u ubuntu ./infrastructure/deploy_ec2.sh -y
+
+          echo "Despliegue completado con exito."
+
+Outputs:
+  DashboardURL:
+    Description: URL publica del Dashboard y Swagger
+    Value: !Sub "http://${CoilEC2Instance.PublicIp}"
+  PublicIP:
+    Description: Direccion IP publica de la instancia
+    Value: !GetAtt CoilEC2Instance.PublicIp
+  DefaultCredentials:
+    Description: Credenciales de acceso a la aplicacion
+    Value: "Usuario: admin | Contraseña: coil2026"
