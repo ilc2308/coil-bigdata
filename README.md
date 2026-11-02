@@ -387,3 +387,7 @@ docker-compose -f docker-compose.prod.yml up --build -d
 | Costo AWS est. (2 DPUs) | $0.000017 USD | < $0.10 USD/corrida |
 | Exactitud de decisión | 100% | 100% ✅ |
 | Exactitud financiera | 100% | 100% ✅ |
+
+
+
+Integrantes: Ismael López Cardozo - Juan David Castañeda Osorno - Tatiana Fda Suarez
