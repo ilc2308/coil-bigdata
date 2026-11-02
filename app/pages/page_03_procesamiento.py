@@ -204,12 +204,7 @@ def _render_local_mode():
         import pandas as pd
 
         if runs:
-            df = pd.DataFrame(runs)[[
-                "id_corrida", "timestamp_fin", "total_recibidas",
-                "total_procesadas", "total_cuarentena",
-                "duracion_segundos", "rendimiento_ordenes_por_segundo",
-                "porcentaje_cubiertas", "formato_salida",
-            ]].rename(columns={
+            cols_map = {
                 "id_corrida": "ID",
                 "timestamp_fin": "Completado",
                 "total_recibidas": "Recibidas",
@@ -219,8 +214,11 @@ def _render_local_mode():
                 "rendimiento_ordenes_por_segundo": "Órd/s",
                 "porcentaje_cubiertas": "% Cob.",
                 "formato_salida": "Formato",
-            })
-            st.dataframe(df, use_container_width=True, hide_index=True)
+            }
+            df = pd.DataFrame(runs)
+            available_cols = [c for c in cols_map.keys() if c in df.columns]
+            df_display = df[available_cols].rename(columns=cols_map)
+            st.dataframe(df_display, use_container_width=True, hide_index=True)
 
             # Selector para ver detalles
             run_ids = [r["id_corrida"] for r in runs]

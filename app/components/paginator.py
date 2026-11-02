@@ -100,24 +100,22 @@ def show_paginated_table(
         df = df.rename(columns=columns_rename)
 
     # Aplicar highlight por columna
-    if highlight_col and highlight_map and highlight_col in df.columns:
-        def _style_row(row):
-            col = highlight_col
-            if columns_rename:
-                col = columns_rename.get(highlight_col, highlight_col)
-            color = highlight_map.get(str(row.get(col, "")), "")
-            if color:
-                return [f"background-color: {color}20; color: {color}" for _ in row]
-            return ["" for _ in row]
+    # Determinar el nombre de la columna en el DataFrame (puede haber sido renombrada)
+    _hl_col_display = columns_rename.get(highlight_col, highlight_col) if columns_rename else highlight_col
+    if highlight_col and highlight_map and _hl_col_display in df.columns:
+        def _make_styler(col_name, h_map):
+            def _style_row(row):
+                try:
+                    val = str(row[col_name])
+                except (KeyError, TypeError):
+                    val = ""
+                color = h_map.get(val, "")
+                if color:
+                    return [f"background-color: {color}20; color: {color}" for _ in row]
+                return ["" for _ in row]
+            return _style_row
 
-        styled = df.style.apply(
-            lambda row: [
-                f"background-color: {highlight_map.get(str(row.get(highlight_col, '')), '#fff')}20"
-                if highlight_map.get(str(row.get(highlight_col, "")), "") else ""
-                for _ in row
-            ],
-            axis=1,
-        )
+        styled = df.style.apply(_make_styler(_hl_col_display, highlight_map), axis=1)
         st.dataframe(styled, use_container_width=True, hide_index=True)
     else:
         st.dataframe(df, use_container_width=True, hide_index=True)
