@@ -31,7 +31,7 @@ _executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="coil-batch")
 def _set_job(run_id: str, **kwargs):
     with _registry_lock:
         if run_id not in _job_registry:
-            _job_registry[run_id] = {}
+            _job_registry[run_id] = {"run_id": run_id}
         _job_registry[run_id].update(kwargs)
 
 
@@ -156,7 +156,7 @@ async def start_batch_job(
         else:
             raise FileNotFoundError(f"Archivo no encontrado: {filename}")
 
-    _set_job(run_id, run_id=run_id, status="pending", filename=filename, started_at=datetime.now().isoformat())
+    _set_job(run_id, status="pending", filename=filename, started_at=datetime.now().isoformat())
 
     loop = asyncio.get_event_loop()
     loop.run_in_executor(
