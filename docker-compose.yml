@@ -1,0 +1,106 @@
+# ============================================================
+# COIL Big Data — Docker Compose
+# Servicios: api (FastAPI :8000) + web (Streamlit :8501)
+#
+# Uso rápido:
+#   cp .env.example .env          # primera vez
+#   docker-compose up --build     # construir e iniciar
+#   docker-compose up -d          # modo background
+#   docker-compose down           # detener
+#   docker-compose logs -f api    # ver logs de la API
+#
+# URLs:
+#   API REST:  http://localhost:8000
+#   Swagger:   http://localhost:8000/docs
+#   Dashboard: http://localhost:8501
+# ============================================================
+
+version: "3.9"
+
+services:
+
+  # ----------------------------------------------------------
+  # Servicio 1: API FastAPI (backend)
+  # ----------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: coil-api:2.0.0
+    container_name: coil-api
+    env_file:
+      - .env
+    environment:
+      PYTHONPATH: /app
+      APP_MODE: local
+      LOCAL_BASE_DIR: /app
+      LOCAL_CATALOGO_SERVICIOS: dataset/COIL_catalogo_servicios_cubiertos.csv
+      LOCAL_CATALOGO_PERFILES: dataset/COIL_catalogo_perfiles_cobertura.csv
+      LOCAL_OUTPUT_DIR: output
+      LOCAL_UPLOAD_DIR: uploads
+    ports:
+      - "8000:8000"
+    volumes:
+      # El dataset grande se monta en modo read-only (no va en la imagen)
+      - ./dataset:/app/dataset:ro
+      # Resultados persistentes entre reinicios del contenedor
+      - ./output:/app/output
+      # Archivos subidos por el usuario
+      - ./uploads:/app/uploads
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+      interval: 20s
+      timeout: 8s
+      retries: 4
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - coil-net
+
+  # ----------------------------------------------------------
+  # Servicio 2: Frontend Streamlit
+  # ----------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.streamlit
+      target: runtime
+    image: coil-web:2.0.0
+    container_name: coil-web
+    env_file:
+      - .env
+    environment:
+      PYTHONPATH: /app
+      # URL interna de Docker para que Streamlit alcance la API
+      API_BASE_URL: http://api:8000
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./dataset:/app/dataset:ro
+      - ./output:/app/output
+      - ./uploads:/app/uploads
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health')"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - coil-net
+
+networks:
+  coil-net:
+    driver: bridge

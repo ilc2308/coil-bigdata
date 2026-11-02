@@ -9,6 +9,11 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
+# Entorno y secretos
+.env
+uploads/*
+!uploads/.gitkeep
+
 # BEGIN AI-DLC:gitignore
 # AI-DLC: local working files
 aidlc/active-space

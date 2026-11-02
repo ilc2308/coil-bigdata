@@ -1,0 +1,57 @@
+# ============================================================
+# COIL Big Data — Dockerfile para Streamlit (Frontend)
+# ============================================================
+
+# ---- Stage 1: Builder ----
+FROM python:3.11-slim AS builder
+
+WORKDIR /build
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+
+# ---- Stage 2: Runtime ----
+FROM python:3.11-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
+
+WORKDIR /app
+
+# Dependencias del builder
+COPY --from=builder /install /usr/local
+
+# Código fuente
+COPY src/   ./src/
+COPY app/   ./app/
+
+# Solo los catálogos y la muestra pequeña van en la imagen
+COPY dataset/COIL_catalogo_servicios_cubiertos.csv ./dataset/
+COPY dataset/COIL_catalogo_perfiles_cobertura.csv  ./dataset/
+COPY dataset/sample_1000.csv                        ./dataset/
+
+# Directorios de trabajo
+RUN mkdir -p /app/output/gold_curated \
+             /app/output/quarantine \
+             /app/uploads \
+             /app/.streamlit
+
+# Configuración de Streamlit en producción (sin browser stats, sin CORS)
+RUN printf '[server]\nheadless = true\nport = 8501\naddress = "0.0.0.0"\nenableCORS = false\nenableXsrfProtection = true\nmaxUploadSize = 512\n\n[browser]\ngatherUsageStats = false\n\n[theme]\nprimaryColor = "#1F4E79"\nbackgroundColor = "#FFFFFF"\nsecondaryBackgroundColor = "#F0F2F6"\ntextColor = "#262730"\n' \
+    > /app/.streamlit/config.toml
+
+# Usuario no-root
+RUN useradd -m -u 1000 coiluser && chown -R coiluser:coiluser /app
+USER coiluser
+
+EXPOSE 8501
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health')" || exit 1
+
+CMD ["streamlit", "run", "app/main.py", \
+     "--server.port=8501", \
+     "--server.address=0.0.0.0", \
+     "--server.headless=true"]

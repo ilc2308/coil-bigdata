@@ -1,0 +1,39 @@
+# ============================================================
+# COIL Big Data — Dependencias del Proyecto
+# Python 3.11+
+# ============================================================
+
+# --- API Backend ---
+fastapi==0.115.4
+uvicorn[standard]==0.32.0
+python-multipart==0.0.12      # upload de archivos en FastAPI
+pydantic==2.9.2
+pydantic-settings==2.6.0
+
+# --- Frontend ---
+streamlit==1.40.0
+plotly==5.24.1
+
+# --- Datos y procesamiento ---
+pandas==2.2.3
+pyarrow==18.0.0
+openpyxl==3.1.5               # exportación a Excel
+
+# --- AWS ---
+boto3==1.35.59
+botocore==1.35.59
+
+# --- Seguridad ---
+python-jose[cryptography]==3.3.0   # JWT
+passlib[bcrypt]==1.7.4
+python-dotenv==1.0.1
+
+# --- Utilidades ---
+httpx==0.27.2                 # cliente HTTP async para tests y llamadas internas
+aiofiles==24.1.0              # lectura de archivos async
+requests==2.32.3              # cliente HTTP sync para Streamlit → API
+
+# --- Testing ---
+pytest==8.3.3
+pytest-asyncio==0.24.0
+moto[s3,glue,athena]==5.0.14   # Mock de AWS para tests sin credenciales reales
