@@ -90,8 +90,8 @@ mkdir -p uploads output/gold_curated output/quarantine
 
 # ── 7. Construir e iniciar servicios ────────────────────────
 echo "[7/7] Construyendo e iniciando servicios..."
-docker compose -f docker-compose.prod.yml build --no-cache
-docker compose -f docker-compose.prod.yml up -d
+sudo docker compose -f docker-compose.prod.yml build --no-cache
+sudo docker compose -f docker-compose.prod.yml up -d
 
 # ── Verificar estado ─────────────────────────────────────────
 echo ""
@@ -100,7 +100,7 @@ sleep 30
 
 echo ""
 echo "Estado de los contenedores:"
-docker compose -f docker-compose.prod.yml ps
+sudo docker compose -f docker-compose.prod.yml ps
 
 echo ""
 PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "<IP-del-servidor>")

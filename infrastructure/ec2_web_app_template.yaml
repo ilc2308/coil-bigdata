@@ -82,7 +82,7 @@ Resources:
           # Ejecutar despliegue
           cd "$TARGET_DIR"
           chmod +x infrastructure/deploy_ec2.sh
-          sudo -u ubuntu ./infrastructure/deploy_ec2.sh -y
+          ./infrastructure/deploy_ec2.sh -y
 
           echo "Despliegue completado con exito."
 
