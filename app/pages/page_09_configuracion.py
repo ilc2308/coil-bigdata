@@ -71,6 +71,27 @@ def render():
         col_c.metric("API Base URL", api_url)
         col_d.metric("Versión", "2.0.0")
 
+        # Dominio permanente DuckDNS
+        st.divider()
+        st.markdown("#### 🌐 Dominio Permanente (DuckDNS)")
+        col_duck1, col_duck2 = st.columns([2.5, 1.5])
+        with col_duck1:
+            st.info("Enlace oficial fijo del proyecto: **[http://coilupbsalud.duckdns.org](http://coilupbsalud.duckdns.org)**")
+        with col_duck2:
+            if st.button("🔄 Sincronizar IP con DuckDNS", use_container_width=True):
+                try:
+                    import requests as _req
+                    r_duck = _req.get(
+                        "https://www.duckdns.org/update?domains=coilupbsalud&token=2a67e81e-9b03-4e0b-8cdc-c46634951d12&ip=",
+                        timeout=10,
+                    )
+                    if "OK" in r_duck.text:
+                        st.success("✅ ¡Dominio coilupbsalud.duckdns.org actualizado!")
+                    else:
+                        st.warning(f"Respuesta de DuckDNS: {r_duck.text}")
+                except Exception as e:
+                    st.error(f"Error al sincronizar con DuckDNS: {e}")
+
         # Archivos disponibles
         files_data = api_get("/api/v1/uploads") or {}
         uploaded = files_data.get("uploaded", [])
