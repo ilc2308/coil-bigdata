@@ -6,6 +6,22 @@
 
 ---
 
+## 🌐 Despliegue en Vivo en AWS (Learner Lab)
+
+La plataforma interactiva y la API REST se encuentran desplegadas en una instancia **EC2 (Ubuntu 22.04 LTS)** en AWS Academy Learner Lab:
+
+* 🖥️ **Dashboard Web (Streamlit):** [http://3.208.9.185](http://3.208.9.185)
+* 📑 **Documentación Interactiva (Swagger API):** [http://3.208.9.185/docs](http://3.208.9.185/docs)
+* 💓 **Health Check API:** [http://3.208.9.185/health](http://3.208.9.185/health)
+
+### 🔐 Credenciales de Acceso a la Plataforma Web
+* **Usuario:** `admin`
+* **Contraseña:** `coil2026`
+
+*(Las credenciales aplican tanto para el login en el Dashboard web de Streamlit como para la autenticación por token en la API REST de Swagger).*
+
+---
+
 ## 🚀 Inicio Rápido — Modo Local
 
 ### Opción A: Docker (recomendado)
@@ -202,7 +218,7 @@ Para las instrucciones paso a paso con capturas y parámetros en la consola de A
 1. Crea un repositorio vacío en tu cuenta de GitHub (por ejemplo, `proyecto-coil-bigdata-salud`).
 2. En la terminal de este proyecto, ejecuta los siguientes comandos:
    ```bash
-   git remote add origin https://github.com/<tu-usuario>/<tu-repo>.git
+   git remote add origin https://github.com/ilc2308/coil-bigdata.git
    git branch -M main
    git push -u origin main
    ```
