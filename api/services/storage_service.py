@@ -606,11 +606,13 @@ def run_athena_query(sql: str, settings: Optional[Settings] = None) -> List[Dict
         raise RuntimeError("run_athena_query solo disponible en APP_MODE=aws")
 
     athena = _get_boto3_client("athena", settings)
+    output_loc = f"s3://{settings.s3_bucket_name}/{settings.s3_athena_results_prefix.strip('/')}/"
 
     response = athena.start_query_execution(
         QueryString=sql,
         QueryExecutionContext={"Database": settings.athena_database},
         WorkGroup=settings.athena_workgroup,
+        ResultConfiguration={"OutputLocation": output_loc},
     )
     query_id = response["QueryExecutionId"]
 

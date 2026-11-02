@@ -387,10 +387,12 @@ def athena_run_query(
     _check_aws_mode(settings)
 
     athena = _boto3_client("athena", settings)
+    output_loc = f"s3://{settings.s3_bucket_name}/{settings.s3_athena_results_prefix.strip('/')}/"
     resp   = athena.start_query_execution(
         QueryString=sql,
         QueryExecutionContext={"Database": settings.athena_database},
         WorkGroup=settings.athena_workgroup,
+        ResultConfiguration={"OutputLocation": output_loc},
     )
     return resp["QueryExecutionId"]
 
