@@ -14,10 +14,10 @@ Parameters:
       - t2.medium
     Description: Tipo de instancia EC2. Se recomienda t3.medium para construccion rapida de Docker.
 
-  LatestAmiId:
-    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Default: '/aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp3/ami-id'
-    Description: AMI oficial mas reciente de Ubuntu 22.04 LTS en la region.
+  AmiId:
+    Type: String
+    Default: ami-033ea4ff4a9c726dc
+    Description: AMI oficial de Ubuntu 22.04 LTS en us-east-1.
 
 Resources:
   # ---------------------------------------------------------------------------
@@ -46,7 +46,7 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: !Ref InstanceType
-      ImageId: !Ref LatestAmiId
+      ImageId: !Ref AmiId
       IamInstanceProfile: LabInstanceProfile
       SecurityGroupIds:
         - !GetAtt WebSecurityGroup.GroupId
