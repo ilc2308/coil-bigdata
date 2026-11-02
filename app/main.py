@@ -36,7 +36,7 @@ st.set_page_config(
     menu_items={
         "Get Help": None,
         "Report a bug": None,
-        "About": "COIL Big Data v2.0 · UPB & Universidad Panamericana",
+        "About": "COIL Big Data v2.0 · Universidad Pontificia Bolivariana (UPB)",
     },
 )
 

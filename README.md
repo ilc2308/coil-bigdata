@@ -1,6 +1,6 @@
 # Solución Distribuida en la Nube para el Procesamiento Masivo de Órdenes Médicas
 **Proyecto COIL Interdisciplinario:** Big Data y Metodología de la Investigación  
-**Instituciones:** Universidad Pontificia Bolivariana (UPB) & Universidad Panamericana  
+**Institución:** Universidad Pontificia Bolivariana (UPB)  
 **Marco de Ingeniería:** AWS Labs AI-DLC (`awslabs/aidlc-workflows`)  
 **Versión:** 2.0.0 — FastAPI + Streamlit + PyArrow + Docker
 

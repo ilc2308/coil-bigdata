@@ -1,7 +1,7 @@
 # AI-DLC Inception: Problema, Estado del Arte y Competidores
 **Proyecto:** Solución Distribuida en la Nube para el Procesamiento Masivo de Órdenes Médicas en un Sistema Público de Salud (Chernovia)  
 **Marco Metodológico:** AWS Labs AI-DLC (`awslabs/aidlc-workflows`) - Fase de Inception  
-**Autores / Afiliación:** Proyecto COIL Interdisciplinario (UPB - Universidad Panamericana)
+**Autores / Afiliación:** Proyecto COIL Interdisciplinario (Universidad Pontificia Bolivariana - UPB)
 
 ---
 

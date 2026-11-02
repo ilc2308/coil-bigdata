@@ -1,6 +1,6 @@
 # ENTREGABLE 01: DOCUMENTO DE PROPUESTA METODOLÓGICA Y ESTADO DEL ARTE (25%)
 **Proyecto COIL Interdisciplinario:** Big Data y Metodología de la Investigación  
-**Instituciones Participantes:** Universidad Pontificia Bolivariana (UPB) & Universidad Panamericana  
+**Institución Participante:** Universidad Pontificia Bolivariana (UPB)  
 **Caso de Estudio:** Diseño e implementación de una solución distribuida en la nube para el procesamiento masivo de órdenes médicas en un sistema público de salud (Chernovia)
 
 ---

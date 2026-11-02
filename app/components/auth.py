@@ -158,7 +158,7 @@ def show_login_form():
 
         st.markdown(
             "<p style='text-align:center; color:#999; font-size:0.75rem; margin-top:2rem'>"
-            "v2.0.0 · UPB & Universidad Panamericana · COIL Big Data</p>",
+            "v2.0.0 · Universidad Pontificia Bolivariana (UPB) · COIL Big Data</p>",
             unsafe_allow_html=True,
         )
 

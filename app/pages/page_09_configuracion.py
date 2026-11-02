@@ -250,7 +250,7 @@ VERSION_CATALOGO=2026.1
         st.divider()
         st.markdown("#### 📞 Soporte")
         st.markdown(
-            "**Proyecto COIL Big Data** · Universidad Pontificia Bolivariana & Universidad Panamericana  \n"
+            "**Proyecto COIL Big Data** · Universidad Pontificia Bolivariana (UPB)  \n"
             "Versión 2.0.0 · Arquitectura: FastAPI + Streamlit + PyArrow + AWS  \n"
             "Datos: Sistema de Salud de Chernovia (1.2M órdenes médicas)"
         )

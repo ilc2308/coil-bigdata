@@ -1,6 +1,6 @@
 # ENTREGABLE 04: PRESENTACIÓN EJECUTIVA Y DEFENSA ANTE EL COMITÉ (25%)
 **Proyecto COIL Interdisciplinario:** Big Data y Metodología de la Investigación  
-**Instituciones:** Universidad Pontificia Bolivariana (UPB) & Universidad Panamericana  
+**Institución:** Universidad Pontificia Bolivariana (UPB)  
 **Caso de Estudio:** Solución Distribuida en AWS para el Procesamiento de 12 Millones de Órdenes Médicas en un Sistema Público de Salud
 
 ---
@@ -10,7 +10,7 @@
 ### Diapositiva 1: Portada y Presentación del Proyecto
 * **Título:** Arquitectura Distribuida en la Nube para la Liquidación Masiva y Confiable de Órdenes Médicas.
 * **Subtítulo:** Licitación Técnica de Big Data y Metodología de la Investigación (Proyecto COIL).
-* **Equipo:** Representantes de Big Data (UPB) y Metodología de la Investigación (Universidad Panamericana).
+* **Equipo:** Representantes de Big Data y Metodología de la Investigación (Universidad Pontificia Bolivariana - UPB).
 * **Mensaje Clave:** Cómo procesar 12 millones de trámites en menos de 2 horas con auditoría criptográfica y a un costo inferior a 10 centavos de dólar.
 
 ### Diapositiva 2: La Magnitud del Reto y el Impacto Fiscal
