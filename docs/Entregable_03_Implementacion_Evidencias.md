@@ -10,9 +10,9 @@
 
 El prototipo funcional se encuentra desplegado y accesible públicamente para evaluación:
 
-* 🖥️ **Dashboard Web (Streamlit):** [http://54.226.55.125](http://54.226.55.125)
-* 📑 **API REST y Documentación Interactiva (Swagger):** [http://54.226.55.125/docs](http://54.226.55.125/docs)
-* 💓 **Health Check del Sistema:** [http://54.226.55.125/health](http://54.226.55.125/health)
+* 🖥️ **Dashboard Web (Streamlit):** [http://coilupbsalud.duckdns.org](http://coilupbsalud.duckdns.org)
+* 📑 **API REST y Documentación Interactiva (Swagger):** [http://coilupbsalud.duckdns.org/docs](http://coilupbsalud.duckdns.org/docs)
+* 💓 **Health Check del Sistema:** [http://coilupbsalud.duckdns.org/health](http://coilupbsalud.duckdns.org/health)
 
 ### 🔐 Credenciales de Inicio de Sesión
 * **Usuario:** `admin`

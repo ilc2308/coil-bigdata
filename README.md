@@ -10,9 +10,9 @@
 
 La plataforma interactiva y la API REST se encuentran desplegadas en una instancia **EC2 (Ubuntu 22.04 LTS)** en AWS Academy Learner Lab:
 
-* 🖥️ **Dashboard Web (Streamlit):** [http://54.226.55.125](http://54.226.55.125)
-* 📑 **Documentación Interactiva (Swagger API):** [http://54.226.55.125/docs](http://54.226.55.125/docs)
-* 💓 **Health Check API:** [http://54.226.55.125/health](http://54.226.55.125/health)
+* 🖥️ **Dashboard Web (Streamlit):** [http://coilupbsalud.duckdns.org](http://coilupbsalud.duckdns.org)
+* 📑 **Documentación Interactiva (Swagger API):** [http://coilupbsalud.duckdns.org/docs](http://coilupbsalud.duckdns.org/docs)
+* 💓 **Health Check API:** [http://coilupbsalud.duckdns.org/health](http://coilupbsalud.duckdns.org/health)
 
 ### 🔐 Credenciales de Acceso a la Plataforma Web
 * **Usuario:** `admin`

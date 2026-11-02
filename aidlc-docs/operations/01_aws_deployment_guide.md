@@ -6,9 +6,9 @@
 
 ## 🌐 Enlaces de Acceso al Despliegue Activo en AWS
 
-* 🖥️ **Dashboard Web:** [http://54.226.55.125](http://54.226.55.125)
-* 📑 **Documentación Interactiva (Swagger):** [http://54.226.55.125/docs](http://54.226.55.125/docs)
-* 💓 **Health Check:** [http://54.226.55.125/health](http://54.226.55.125/health)
+* 🖥️ **Dashboard Web:** [http://coilupbsalud.duckdns.org](http://coilupbsalud.duckdns.org)
+* 📑 **Documentación Interactiva (Swagger):** [http://coilupbsalud.duckdns.org/docs](http://coilupbsalud.duckdns.org/docs)
+* 💓 **Health Check:** [http://coilupbsalud.duckdns.org/health](http://coilupbsalud.duckdns.org/health)
 * 🔐 **Credenciales:** `admin` / `coil2026`
 
 ---

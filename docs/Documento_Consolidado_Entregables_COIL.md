@@ -19,9 +19,9 @@
 ---
 
 ### 🌐 Enlaces de Acceso al Prototipo Desplegado en AWS Learner Lab
-* 🖥️ **Dashboard Web Interactivo (Streamlit):** [http://54.226.55.125](http://54.226.55.125)
-* 📑 **Documentación Interactiva de la API REST (Swagger UI):** [http://54.226.55.125/docs](http://54.226.55.125/docs)
-* 💓 **Health Check del Sistema:** [http://54.226.55.125/health](http://54.226.55.125/health)
+* 🖥️ **Dashboard Web Interactivo (Streamlit):** [http://coilupbsalud.duckdns.org](http://coilupbsalud.duckdns.org)
+* 📑 **Documentación Interactiva de la API REST (Swagger UI):** [http://coilupbsalud.duckdns.org/docs](http://coilupbsalud.duckdns.org/docs)
+* 💓 **Health Check del Sistema:** [http://coilupbsalud.duckdns.org/health](http://coilupbsalud.duckdns.org/health)
 
 #### 🔐 Credenciales de Acceso
 * **Usuario:** `admin`
@@ -391,8 +391,8 @@ Detalle de casos probados:
 * **Subtítulo:** Licitación Técnica de Big Data y Metodología de la Investigación (Proyecto COIL).
 * **Equipo:** Representantes de Big Data y Metodología de la Investigación (Universidad Pontificia Bolivariana - UPB).
 * **Integrantes:** Ismael López Cardozo, Juan David Castañeda Osorno, Tatiana Fda Suarez.
-* **Demostración en Vivo (AWS Learner Lab):** [http://54.226.55.125](http://54.226.55.125) (Login: `admin` / `coil2026`)
-* **API REST & Swagger:** [http://54.226.55.125/docs](http://54.226.55.125/docs)
+* **Demostración en Vivo (AWS Learner Lab):** [http://coilupbsalud.duckdns.org](http://coilupbsalud.duckdns.org) (Login: `admin` / `coil2026`)
+* **API REST & Swagger:** [http://coilupbsalud.duckdns.org/docs](http://coilupbsalud.duckdns.org/docs)
 * **Mensaje Clave:** Cómo procesar 12 millones de trámites en menos de 2 horas con auditoría criptográfica y a un costo inferior a 10 centavos de dólar.
 
 ### Diapositiva 2: La Magnitud del Reto y el Impacto Fiscal
