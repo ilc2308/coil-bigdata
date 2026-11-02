@@ -31,7 +31,9 @@ from fastapi.responses import JSONResponse
 from api.middleware.auth import get_current_user
 from api.routers import audit, auth, coverage, process, quarantine, reports, results
 from api.routers import aws as aws_router
-from api.services.config import get_settings
+from api.services.config import get_settings, update_settings
+from pydantic import BaseModel
+from typing import Optional
 
 # ---------------------------------------------------------------------------
 # Lifespan — configuración de inicio/cierre
@@ -161,4 +163,54 @@ async def get_config(
         "s3_bucket": settings.s3_bucket_name if settings.is_aws else None,
         "glue_job": settings.glue_job_name if settings.is_aws else None,
         "athena_database": settings.athena_database if settings.is_aws else None,
+    }
+
+
+class ModeUpdateRequest(BaseModel):
+    app_mode: str
+    aws_access_key_id: Optional[str] = None
+    aws_secret_access_key: Optional[str] = None
+    aws_session_token: Optional[str] = None
+    aws_default_region: Optional[str] = None
+    s3_bucket_name: Optional[str] = None
+    glue_job_name: Optional[str] = None
+    athena_database: Optional[str] = None
+
+
+@app.post("/api/v1/config/mode", tags=["Sistema"])
+async def switch_mode(
+    request: ModeUpdateRequest,
+    _user: str = Depends(get_current_user),
+):
+    """Permite cambiar dinámicamente entre modo 'local' y 'aws' y configurar credenciales."""
+    mode = request.app_mode.lower()
+    if mode not in ("local", "aws"):
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"detail": "Modo no válido. Debe ser 'local' o 'aws'."},
+        )
+
+    updates = {"app_mode": mode}
+    if request.aws_access_key_id is not None:
+        updates["aws_access_key_id"] = request.aws_access_key_id
+    if request.aws_secret_access_key is not None:
+        updates["aws_secret_access_key"] = request.aws_secret_access_key
+    if request.aws_session_token is not None:
+        updates["aws_session_token"] = request.aws_session_token
+    if request.aws_default_region is not None:
+        updates["aws_default_region"] = request.aws_default_region
+    if request.s3_bucket_name is not None:
+        updates["s3_bucket_name"] = request.s3_bucket_name
+    if request.glue_job_name is not None:
+        updates["glue_job_name"] = request.glue_job_name
+    if request.athena_database is not None:
+        updates["athena_database"] = request.athena_database
+
+    settings = update_settings(**updates)
+    return {
+        "status": "success",
+        "message": f"Modo actualizado a {mode.upper()}",
+        "app_mode": settings.app_mode,
+        "s3_bucket": settings.s3_bucket_name,
+        "aws_region": settings.aws_default_region,
     }

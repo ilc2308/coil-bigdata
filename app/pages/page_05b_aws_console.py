@@ -93,11 +93,64 @@ def render():
 
         st.divider()
 
+        # Conmutador interactivo de modo
+        st.markdown("#### ⚡ Conmutador de Modo en Vivo (Local ⇄ AWS)")
+        st.caption("Cambia el modo de la aplicación y actualiza tus credenciales del AWS Academy Learner Lab sin reiniciar el servidor.")
+
+        with st.form("form_mode_switch"):
+            col_m1, col_m2 = st.columns(2)
+            with col_m1:
+                new_mode = st.selectbox(
+                    "Modo de operación deseado",
+                    ["aws", "local"],
+                    index=0 if is_aws else 1,
+                    format_func=lambda x: "☁️ AWS Cloud (Amazon S3 / Glue / Athena)" if x == "aws" else "💻 Modo Local (Almacenamiento Local)"
+                )
+                target_bucket = st.text_input(
+                    "Nombre del Bucket S3",
+                    value=config.get("s3_bucket") or "coil-bigdata-salud-datalake-855822524954-dev",
+                    help="Nombre del bucket creado por CloudFormation"
+                )
+                aws_reg = st.text_input("Región AWS", value="us-east-1")
+
+            with col_m2:
+                st.caption("Credenciales del Learner Lab (AWS Details → Show):")
+                ak_input = st.text_input("AWS_ACCESS_KEY_ID", type="password", placeholder="ASIA...", help="Access Key de sesión")
+                sk_input = st.text_input("AWS_SECRET_ACCESS_KEY", type="password", placeholder="...", help="Secret Key de sesión")
+                st_input = st.text_area("AWS_SESSION_TOKEN", height=68, placeholder="IQoJb3JpZ2lu...", help="Token de sesión temporal")
+
+            submit_mode = st.form_submit_button("🚀 Aplicar y Activar Modo", type="primary", use_container_width=True)
+
+        if submit_mode:
+            payload = {
+                "app_mode": new_mode,
+                "s3_bucket_name": target_bucket.strip(),
+                "aws_default_region": aws_reg.strip(),
+            }
+            if ak_input.strip():
+                payload["aws_access_key_id"] = ak_input.strip()
+            if sk_input.strip():
+                payload["aws_secret_access_key"] = sk_input.strip()
+            if st_input.strip():
+                payload["aws_session_token"] = st_input.strip()
+
+            with st.spinner("Actualizando configuración en la API…"):
+                res = api_post("/api/v1/config/mode", payload)
+
+            if res and res.get("status") == "success":
+                st.success(f"✅ ¡{res.get('message')} exitosamente!")
+                time.sleep(1)
+                st.rerun()
+            else:
+                st.error("Error al actualizar la configuración en el backend.")
+
+        st.divider()
+
         # Configuración / Plantilla de Credenciales
-        st.markdown("#### Configuración de Credenciales de AWS Academy Learner Lab")
+        st.markdown("#### Configuración Manual en Archivo `.env` (Alternativa)")
         st.info(
-            "💡 En el AWS Academy Learner Lab, las credenciales temporales tienen vigencia de 4 horas. "
-            "Para activarlas en el servidor, agrégalas a tu archivo `.env` o utilízalas en tus scripts."
+            "💡 Si prefieres configurar el archivo `.env` directamente en la terminal de la máquina o contenedor, "
+            "usa esta plantilla y reinicia el servicio:"
         )
 
         with st.expander("⚙️ Ver plantilla de configuración `.env`", expanded=not is_aws):

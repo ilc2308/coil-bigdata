@@ -100,7 +100,21 @@ class Settings(BaseSettings):
         return self.app_mode.lower() == "aws"
 
 
-@lru_cache(maxsize=1)
+_settings_instance: Optional[Settings] = None
+
+
 def get_settings() -> Settings:
     """Retorna la instancia singleton de configuración."""
-    return Settings()
+    global _settings_instance
+    if _settings_instance is None:
+        _settings_instance = Settings()
+    return _settings_instance
+
+
+def update_settings(**kwargs) -> Settings:
+    """Actualiza dinámicamente parámetros de configuración en caliente."""
+    s = get_settings()
+    for k, v in kwargs.items():
+        if hasattr(s, k) and v is not None:
+            setattr(s, k, v)
+    return s
