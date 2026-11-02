@@ -10,9 +10,9 @@
 
 La plataforma interactiva y la API REST se encuentran desplegadas en una instancia **EC2 (Ubuntu 22.04 LTS)** en AWS Academy Learner Lab:
 
-* 🖥️ **Dashboard Web (Streamlit):** [http://3.208.9.185](http://3.208.9.185)
-* 📑 **Documentación Interactiva (Swagger API):** [http://3.208.9.185/docs](http://3.208.9.185/docs)
-* 💓 **Health Check API:** [http://3.208.9.185/health](http://3.208.9.185/health)
+* 🖥️ **Dashboard Web (Streamlit):** [http://54.226.55.125](http://54.226.55.125)
+* 📑 **Documentación Interactiva (Swagger API):** [http://54.226.55.125/docs](http://54.226.55.125/docs)
+* 💓 **Health Check API:** [http://54.226.55.125/health](http://54.226.55.125/health)
 
 ### 🔐 Credenciales de Acceso a la Plataforma Web
 * **Usuario:** `admin`

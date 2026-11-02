@@ -19,9 +19,9 @@
 ---
 
 ### 🌐 Enlaces de Acceso al Prototipo Desplegado en AWS Learner Lab
-* 🖥️ **Dashboard Web Interactivo (Streamlit):** [http://3.208.9.185](http://3.208.9.185)
-* 📑 **Documentación Interactiva de la API REST (Swagger UI):** [http://3.208.9.185/docs](http://3.208.9.185/docs)
-* 💓 **Health Check del Sistema:** [http://3.208.9.185/health](http://3.208.9.185/health)
+* 🖥️ **Dashboard Web Interactivo (Streamlit):** [http://54.226.55.125](http://54.226.55.125)
+* 📑 **Documentación Interactiva de la API REST (Swagger UI):** [http://54.226.55.125/docs](http://54.226.55.125/docs)
+* 💓 **Health Check del Sistema:** [http://54.226.55.125/health](http://54.226.55.125/health)
 
 #### 🔐 Credenciales de Acceso
 * **Usuario:** `admin`
@@ -391,8 +391,8 @@ Detalle de casos probados:
 * **Subtítulo:** Licitación Técnica de Big Data y Metodología de la Investigación (Proyecto COIL).
 * **Equipo:** Representantes de Big Data y Metodología de la Investigación (Universidad Pontificia Bolivariana - UPB).
 * **Integrantes:** Ismael López Cardozo, Juan David Castañeda Osorno, Tatiana Fda Suarez.
-* **Demostración en Vivo (AWS Learner Lab):** [http://3.208.9.185](http://3.208.9.185) (Login: `admin` / `coil2026`)
-* **API REST & Swagger:** [http://3.208.9.185/docs](http://3.208.9.185/docs)
+* **Demostración en Vivo (AWS Learner Lab):** [http://54.226.55.125](http://54.226.55.125) (Login: `admin` / `coil2026`)
+* **API REST & Swagger:** [http://54.226.55.125/docs](http://54.226.55.125/docs)
 * **Mensaje Clave:** Cómo procesar 12 millones de trámites en menos de 2 horas con auditoría criptográfica y a un costo inferior a 10 centavos de dólar.
 
 ### Diapositiva 2: La Magnitud del Reto y el Impacto Fiscal

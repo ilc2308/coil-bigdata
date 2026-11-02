@@ -6,9 +6,9 @@
 
 ## 🌐 Enlaces de Acceso al Despliegue Activo en AWS
 
-* 🖥️ **Dashboard Web:** [http://3.208.9.185](http://3.208.9.185)
-* 📑 **Documentación Interactiva (Swagger):** [http://3.208.9.185/docs](http://3.208.9.185/docs)
-* 💓 **Health Check:** [http://3.208.9.185/health](http://3.208.9.185/health)
+* 🖥️ **Dashboard Web:** [http://54.226.55.125](http://54.226.55.125)
+* 📑 **Documentación Interactiva (Swagger):** [http://54.226.55.125/docs](http://54.226.55.125/docs)
+* 💓 **Health Check:** [http://54.226.55.125/health](http://54.226.55.125/health)
 * 🔐 **Credenciales:** `admin` / `coil2026`
 
 ---

@@ -10,9 +10,9 @@
 
 El prototipo funcional se encuentra desplegado y accesible públicamente para evaluación:
 
-* 🖥️ **Dashboard Web (Streamlit):** [http://3.208.9.185](http://3.208.9.185)
-* 📑 **API REST y Documentación Interactiva (Swagger):** [http://3.208.9.185/docs](http://3.208.9.185/docs)
-* 💓 **Health Check del Sistema:** [http://3.208.9.185/health](http://3.208.9.185/health)
+* 🖥️ **Dashboard Web (Streamlit):** [http://54.226.55.125](http://54.226.55.125)
+* 📑 **API REST y Documentación Interactiva (Swagger):** [http://54.226.55.125/docs](http://54.226.55.125/docs)
+* 💓 **Health Check del Sistema:** [http://54.226.55.125/health](http://54.226.55.125/health)
 
 ### 🔐 Credenciales de Inicio de Sesión
 * **Usuario:** `admin`
