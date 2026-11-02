@@ -63,7 +63,10 @@ def read_gold_paginated(
         settings = get_settings()
 
     if settings.is_aws:
-        return _read_gold_athena(page, page_size, filters or {}, settings)
+        try:
+            return _read_gold_athena(page, page_size, filters or {}, settings)
+        except Exception:
+            pass  # Fallback a almacenamiento local si Athena aún no tiene las tablas cargadas
 
     page_size = min(page_size, 2000)
     gold_path = _gold_dir(settings)
@@ -260,7 +263,10 @@ def read_quarantine_paginated(
         settings = get_settings()
 
     if settings.is_aws:
-        return _read_quarantine_athena(page, page_size, run_id, settings)
+        try:
+            return _read_quarantine_athena(page, page_size, run_id, settings)
+        except Exception:
+            pass  # Fallback a cuarentena local si Athena no tiene la tabla
 
     page_size = min(page_size, 2000)
     qdir = _quarantine_dir(settings)
@@ -293,7 +299,12 @@ def list_run_metrics(settings: Optional[Settings] = None) -> List[Dict]:
         settings = get_settings()
 
     if settings.is_aws:
-        return _list_run_metrics_s3(settings)
+        try:
+            s3_metrics = _list_run_metrics_s3(settings)
+            if s3_metrics:
+                return s3_metrics
+        except Exception:
+            pass  # Fallback a métricas locales si S3 falla o no tiene métricas aún
 
     metrics_files = sorted(
         glob.glob(os.path.join(_metrics_dir(settings), "metrics_*.json")),
@@ -344,7 +355,10 @@ def compute_gold_stats(settings: Optional[Settings] = None) -> Dict[str, Any]:
         settings = get_settings()
 
     if settings.is_aws:
-        return _compute_gold_stats_athena(settings)
+        try:
+            return _compute_gold_stats_athena(settings)
+        except Exception:
+            pass  # Fallback a estadísticas locales si Athena aún no tiene las vistas creadas
 
     gold_path = _gold_dir(settings)
     stats: Dict[str, Any] = {
@@ -749,10 +763,14 @@ def _list_run_metrics_s3(settings: Settings) -> List[Dict]:
     from api.services.aws_service import s3_list_objects, s3_download_bytes
 
     prefix  = "metrics/"
-    objects = s3_list_objects(prefix, settings, max_keys=100)
+    try:
+        objects = s3_list_objects(prefix, settings, max_keys=100)
+    except Exception:
+        return []
+
     results = []
-    for obj in sorted(objects, key=lambda x: x["last_modified"], reverse=True):
-        if not obj["key"].endswith(".json"):
+    for obj in sorted(objects, key=lambda x: x.get("last_modified", 0), reverse=True):
+        if not obj.get("key", "").endswith(".json"):
             continue
         try:
             raw   = s3_download_bytes(obj["key"], settings)
