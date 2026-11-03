@@ -457,7 +457,7 @@ def athena_get_results(
     athena = _boto3_client("athena", settings)
     resp   = athena.get_query_results(
         QueryExecutionId=query_execution_id,
-        MaxResults=min(max_rows + 1, 1001),  # +1 para el header
+        MaxResults=min(max(max_rows, 1), 1000),
     )
 
     result_rows = resp.get("ResultSet", {}).get("Rows", [])
