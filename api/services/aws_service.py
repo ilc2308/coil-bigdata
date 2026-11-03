@@ -455,9 +455,12 @@ def athena_get_results(
     _check_aws_mode(settings)
 
     athena = _boto3_client("athena", settings)
+    # Athena incluye la fila de encabezados en el conteo de MaxResults,
+    # por lo que pedimos max_rows + 1, con un tope estricto de 1000 (límite de la API de AWS).
+    fetch_limit = min(max(max_rows + 1, 2), 1000)
     resp   = athena.get_query_results(
         QueryExecutionId=query_execution_id,
-        MaxResults=min(max(max_rows, 1), 1000),
+        MaxResults=fetch_limit,
     )
 
     result_rows = resp.get("ResultSet", {}).get("Rows", [])
