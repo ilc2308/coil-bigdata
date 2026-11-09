@@ -37,6 +37,7 @@ services:
       PYTHONPATH: /app
       APP_MODE: ${APP_MODE:-local}
     volumes:
+      - ./api:/app/api
       - ./dataset:/app/dataset:ro
       - coil_output:/app/output
       - coil_uploads:/app/uploads
@@ -76,6 +77,7 @@ services:
       PYTHONPATH: /app
       API_BASE_URL: http://api:8000
     volumes:
+      - ./app:/app/app
       - ./dataset:/app/dataset:ro
       - coil_output:/app/output
       - coil_uploads:/app/uploads
