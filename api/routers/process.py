@@ -150,12 +150,45 @@ async def get_job_status(
     _user: str = Depends(get_current_user),
     settings: Settings = Depends(get_settings),
 ):
-    # Primero buscar en el registro en memoria (job activo)
+    # 1. Primero buscar en el registro en memoria (job local activo)
     job = batch_service.get_job_status(run_id)
     if job:
         return job
 
-    # Si no está en memoria, buscar en los archivos de métricas (corridas anteriores)
+    # 2. Si es un JobRunId de AWS Glue (empieza por jr_) o estamos en modo AWS, consultar AWS Glue
+    if run_id.startswith("jr_") or settings.is_aws:
+        try:
+            from api.services.aws_service import glue_get_job_run
+            glue_info = glue_get_job_run(run_id, settings)
+            raw_state = str(glue_info.get("status", "UNKNOWN")).upper()
+            state_map = {
+                "STARTING": "pending",
+                "RUNNING": "running",
+                "STOPPING": "running",
+                "SUCCEEDED": "completed",
+                "FAILED": "failed",
+                "TIMEOUT": "failed",
+                "STOPPED": "failed",
+            }
+            mapped_status = state_map.get(raw_state, raw_state.lower())
+            progress = 100.0 if mapped_status == "completed" else (50.0 if mapped_status == "running" else 10.0)
+            
+            return {
+                "run_id": run_id,
+                "status": mapped_status,
+                "progress_pct": progress,
+                "glue_details": glue_info,
+                "metrics": {
+                    "execution_time_seconds": glue_info.get("execution_time_seconds", 0),
+                    "estimated_cost_usd": glue_info.get("estimated_cost_usd", 0.0),
+                    "status": glue_info.get("status"),
+                    "job_name": glue_info.get("job_name"),
+                }
+            }
+        except Exception:
+            pass
+
+    # 3. Si no está en memoria ni en Glue, buscar en archivos de métricas locales
     metrics = storage_service.get_run_metrics(run_id, settings)
     if metrics:
         return {

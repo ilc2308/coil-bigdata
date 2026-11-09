@@ -287,6 +287,20 @@ def _render_aws_mode(config_data: dict):
 
     if st.session_state.get("glue_run_id"):
         run_id = st.session_state["glue_run_id"]
+        col_stat, col_ref = st.columns([3, 1])
+        with col_stat:
+            st.info(f"Monitoreando Glue Job: `{run_id}`")
+        with col_ref:
+            if st.button("🔄 Actualizar", key="refresh_glue_job"):
+                st.rerun()
+
         status_data = api_get(f"/api/v1/process/{run_id}")
         if status_data:
+            state = str(status_data.get("status", "unknown")).upper()
+            if state in ["COMPLETED", "SUCCEEDED"]:
+                st.success(f"✅ Glue Job finalizado con éxito ({state})")
+            elif state in ["FAILED", "STOPPED", "TIMEOUT"]:
+                st.error(f"❌ Glue Job terminó con estado: {state}")
+            else:
+                st.info(f"⏳ Glue Job en ejecución: {state}")
             st.json(status_data)
