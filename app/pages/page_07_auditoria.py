@@ -67,12 +67,12 @@ def render():
             )
             st.dataframe(styled, use_container_width=True, hide_index=True)
 
-            # Timeline
+            # Timeline (últimas 10 corridas más recientes)
             full_runs = api_get("/api/v1/metrics") or {}
             all_runs = full_runs.get("runs", [])
             if all_runs:
                 st.plotly_chart(
-                    runs_timeline(all_runs[-10:], "Rendimiento histórico (últimas 10 corridas)"),
+                    runs_timeline(all_runs[:10], "Rendimiento histórico (últimas 10 corridas)"),
                     use_container_width=True,
                 )
 

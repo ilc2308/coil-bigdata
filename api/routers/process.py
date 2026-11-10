@@ -173,17 +173,24 @@ async def get_job_status(
             mapped_status = state_map.get(raw_state, raw_state.lower())
             progress = 100.0 if mapped_status == "completed" else (50.0 if mapped_status == "running" else 10.0)
             
-            return {
-                "run_id": run_id,
-                "status": mapped_status,
-                "progress_pct": progress,
-                "glue_details": glue_info,
-                "metrics": {
+            # Si el job finalizó con éxito, enriquecer con métricas completas para el dashboard
+            metrics_payload = None
+            if mapped_status == "completed":
+                metrics_payload = storage_service.get_run_metrics(run_id, settings)
+            if not metrics_payload:
+                metrics_payload = {
                     "execution_time_seconds": glue_info.get("execution_time_seconds", 0),
                     "estimated_cost_usd": glue_info.get("estimated_cost_usd", 0.0),
                     "status": glue_info.get("status"),
                     "job_name": glue_info.get("job_name"),
                 }
+
+            return {
+                "run_id": run_id,
+                "status": mapped_status,
+                "progress_pct": progress,
+                "glue_details": glue_info,
+                "metrics": metrics_payload,
             }
         except Exception:
             pass
