@@ -38,6 +38,7 @@ services:
       APP_MODE: ${APP_MODE:-local}
     volumes:
       - ./api:/app/api
+      - ./src:/app/src
       - ./dataset:/app/dataset:ro
       - coil_output:/app/output
       - coil_uploads:/app/uploads
@@ -78,6 +79,7 @@ services:
       API_BASE_URL: http://api:8000
     volumes:
       - ./app:/app/app
+      - ./src:/app/src
       - ./dataset:/app/dataset:ro
       - coil_output:/app/output
       - coil_uploads:/app/uploads
