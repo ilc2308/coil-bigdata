@@ -54,8 +54,9 @@ async def get_audit_runs(
     return {"total": len(audit_summary), "runs": audit_summary}
 
 
-@router.post(
+@router.api_route(
     "/validate/{run_id}",
+    methods=["GET", "POST"],
     summary="Ejecutar oráculo de validación independiente",
     description=(
         "Lanza el oracle_validator sobre los resultados de una corrida específica. "
@@ -74,6 +75,10 @@ async def run_oracle_validation(
     settings: Settings = Depends(get_settings),
 ):
     import asyncio
+    import csv
+    import glob
+    import os
+    import sys
     from pathlib import Path
 
     # Resolver ruta del CSV de entrada
@@ -90,16 +95,62 @@ async def run_oracle_validation(
             detail=f"Archivo '{input_filename}' no encontrado en dataset/ ni uploads/",
         )
 
+    # 1. Intentar cargar registros desde Amazon Athena si estamos en modo AWS
+    gold_records = {}
+    if settings.is_aws:
+        try:
+            from api.services.aws_service import athena_execute_and_fetch
+            db = settings.athena_database
+            sql = f"SELECT id_solicitud, decision, porcentaje_cobertura, valor_reconocido, dno_hash, id_corrida FROM {db}.gold_solicitudes_cobertura"
+            if run_id.startswith("GLUE-"):
+                sql += f" WHERE id_corrida = '{run_id}'"
+            sql += " LIMIT 2000"
+            _, rows = athena_execute_and_fetch(sql, settings, max_rows=2000)
+            if rows:
+                gold_records = {r["id_solicitud"]: r for r in rows}
+        except Exception:
+            pass
+
+    # 2. Si no se cargaron de Athena, buscar en archivos locales (Parquet o CSV)
     gold_dir = storage_service._gold_dir(settings)
-    if not Path(gold_dir).exists():
+    if not gold_records and Path(gold_dir).exists():
+        # Primero buscar Parquet
+        parquet_files = glob.glob(os.path.join(gold_dir, "**", "*.parquet"), recursive=True)
+        if parquet_files:
+            try:
+                import pyarrow.parquet as pq
+                for pf in parquet_files:
+                    table = pq.read_table(pf)
+                    pydf = table.to_pandas()
+                    for _, r in pydf.iterrows():
+                        gold_records[str(r["id_solicitud"])] = {
+                            "id_solicitud": str(r["id_solicitud"]),
+                            "decision": str(r.get("decision", "")),
+                            "porcentaje_cobertura": int(r.get("porcentaje_cobertura", 0)),
+                            "valor_reconocido": int(r.get("valor_reconocido", 0)),
+                            "dno_hash": str(r.get("dno_hash", "")),
+                        }
+            except Exception:
+                pass
+
+        # Luego buscar CSV
+        if not gold_records:
+            csv_files = glob.glob(os.path.join(gold_dir, "**", "*.csv"), recursive=True)
+            for cf in csv_files:
+                try:
+                    with open(cf, "r", encoding="utf-8") as f:
+                        for row in csv.DictReader(f):
+                            gold_records[row["id_solicitud"]] = row
+                except Exception:
+                    pass
+
+    if not gold_records:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="No existe capa gold. Ejecuta un procesamiento primero.",
+            detail="No se encontraron registros procesados en la capa Gold (Athena ni local).",
         )
 
     try:
-        import sys
-        import os
         project_root = str(Path(__file__).resolve().parent.parent.parent)
         if project_root not in sys.path:
             sys.path.insert(0, project_root)
@@ -114,7 +165,8 @@ async def run_oracle_validation(
             input_path,
             settings.catalogo_servicios_path,
             settings.catalogo_perfiles_path,
-            gold_dir,
+            gold_dir if os.path.exists(gold_dir) else "",
+            gold_records,
         )
         return result
     except Exception as exc:

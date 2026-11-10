@@ -11,9 +11,20 @@ import csv
 import glob
 import json
 import time
-from typing import Dict, Any
+import decimal
+from typing import Dict, Any, Optional
 
-def run_oracle_validation(input_csv_path: str, catalogo_servicios_path: str, catalogo_perfiles_path: str, output_gold_dir: str) -> Dict[str, Any]:
+def _round_half_up(val: float) -> int:
+    d = decimal.Decimal(str(val))
+    return int(d.quantize(decimal.Decimal('1'), rounding=decimal.ROUND_HALF_UP))
+
+def run_oracle_validation(
+    input_csv_path: str,
+    catalogo_servicios_path: str,
+    catalogo_perfiles_path: str,
+    output_gold_dir: str = "",
+    gold_records: Optional[Dict[str, Dict]] = None,
+) -> Dict[str, Any]:
     print("=" * 60)
     print("INICIANDO VALIDACIÓN INDEPENDIENTE CON ORÁCULO DE NEGOCIO")
     print("=" * 60)
@@ -32,18 +43,42 @@ def run_oracle_validation(input_csv_path: str, catalogo_servicios_path: str, cat
         for row in reader:
             perfiles_map[row['perfil_cobertura'].strip().upper()] = int(row['porcentaje_cobertura_si_el_servicio_esta_cubierto'])
 
-    # 2. Leer todos los archivos procesados en la capa Gold
+    # 2. Leer o recibir los registros procesados en la capa Gold
     processed_records = {}
-    csv_parts = glob.glob(os.path.join(output_gold_dir, "**", "*.csv"), recursive=True)
-    if not csv_parts:
+    if gold_records is not None:
+        processed_records = dict(gold_records)
+    elif output_gold_dir:
+        # Intentar leer archivos Parquet locales
+        parquet_parts = glob.glob(os.path.join(output_gold_dir, "**", "*.parquet"), recursive=True)
+        if parquet_parts:
+            try:
+                import pyarrow.parquet as pq
+                for ppart in parquet_parts:
+                    table = pq.read_table(ppart)
+                    df_p = table.to_pandas()
+                    for _, row in df_p.iterrows():
+                        processed_records[str(row['id_solicitud'])] = {
+                            'id_solicitud': str(row['id_solicitud']),
+                            'decision': str(row.get('decision', '')),
+                            'porcentaje_cobertura': int(row.get('porcentaje_cobertura', 0)),
+                            'valor_reconocido': int(row.get('valor_reconocido', 0)),
+                            'dno_hash': str(row.get('dno_hash', '')),
+                        }
+            except Exception as e:
+                print(f"Aviso leyendo Parquet local: {e}")
+
+        # Si no hay Parquet, intentar CSV
+        if not processed_records:
+            csv_parts = glob.glob(os.path.join(output_gold_dir, "**", "*.csv"), recursive=True)
+            for part in csv_parts:
+                with open(part, 'r', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        processed_records[row['id_solicitud']] = row
+        
+    if not processed_records:
         raise FileNotFoundError(f"No se encontraron archivos procesados en: {output_gold_dir}")
         
-    for part in csv_parts:
-        with open(part, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                processed_records[row['id_solicitud']] = row
-                
     print(f"Total registros leídos de la capa Gold: {len(processed_records):,}")
     
     # 3. Recorrer el archivo original y contrastar cada decisión frente al oráculo
@@ -79,7 +114,7 @@ def run_oracle_validation(input_csv_path: str, catalogo_servicios_path: str, cat
             
             cubre_oracle = servicio_oracle in servicios_set
             pct_oracle = perfiles_map.get(perfil_oracle, 0) if cubre_oracle else 0
-            val_oracle = int(round(valor_proc * (pct_oracle / 100.0)))
+            val_oracle = _round_half_up(valor_proc * (pct_oracle / 100.0))
             decision_oracle = "CUBRE" if cubre_oracle else "NO CUBRE"
             
             # Comparaciones exactas
@@ -92,7 +127,8 @@ def run_oracle_validation(input_csv_path: str, catalogo_servicios_path: str, cat
                 
             # Verificación de privacidad: los campos de hash deben ser de 64 chars y no contener el DNO real
             dno_real = glosa_dict.get('dno', '')
-            if len(proc.get('dno_hash', '')) != 64 or dno_real in proc.get('dno_hash', ''):
+            dno_hash = str(proc.get('dno_hash', ''))
+            if len(dno_hash) != 64 or (dno_real and dno_real in dno_hash):
                 fugas_pii += 1
                 
     exactitud_decision = ((total_evaluados - discrepancias_decision) / total_evaluados * 100) if total_evaluados > 0 else 0
