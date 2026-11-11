@@ -68,6 +68,50 @@ class DeployRequest(BaseModel):
     upload_glue_script: bool = True
 
 
+class RawCredentialsRequest(BaseModel):
+    raw_credentials: str
+
+
+def _persist_env_credentials(env_path: str, ak: str, sk: str, stk: str):
+    """Guarda las credenciales en .env para que persistan ante reinicios de contenedor."""
+    import os
+    if not os.path.exists(env_path):
+        return
+    try:
+        with open(env_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+        new_lines = []
+        keys_set = set()
+        for line in lines:
+            if line.startswith("AWS_ACCESS_KEY_ID="):
+                new_lines.append(f"AWS_ACCESS_KEY_ID={ak}\n")
+                keys_set.add("AWS_ACCESS_KEY_ID")
+            elif line.startswith("AWS_SECRET_ACCESS_KEY="):
+                new_lines.append(f"AWS_SECRET_ACCESS_KEY={sk}\n")
+                keys_set.add("AWS_SECRET_ACCESS_KEY")
+            elif line.startswith("AWS_SESSION_TOKEN="):
+                new_lines.append(f"AWS_SESSION_TOKEN={stk}\n")
+                keys_set.add("AWS_SESSION_TOKEN")
+            elif line.startswith("APP_MODE="):
+                new_lines.append("APP_MODE=aws\n")
+                keys_set.add("APP_MODE")
+            else:
+                new_lines.append(line)
+
+        if "AWS_ACCESS_KEY_ID" not in keys_set:
+            new_lines.append(f"AWS_ACCESS_KEY_ID={ak}\n")
+        if "AWS_SECRET_ACCESS_KEY" not in keys_set:
+            new_lines.append(f"AWS_SECRET_ACCESS_KEY={sk}\n")
+        if "AWS_SESSION_TOKEN" not in keys_set:
+            new_lines.append(f"AWS_SESSION_TOKEN={stk}\n")
+
+        with open(env_path, "w", encoding="utf-8") as f:
+            f.writelines(new_lines)
+    except Exception:
+        pass
+
+
 # ---------------------------------------------------------------------------
 # Estado / conectividad
 # ---------------------------------------------------------------------------
@@ -77,7 +121,7 @@ class DeployRequest(BaseModel):
     summary="Verificar conexión con AWS",
     description=(
         "Verifica que las credenciales son válidas intentando un STS GetCallerIdentity. "
-        "No genera costos."
+        "Soporta detección automática mediante Roles IAM (LabRole / EC2 IMDS) y fallback."
     ),
 )
 async def aws_status(
@@ -86,32 +130,174 @@ async def aws_status(
 ):
     _require_aws(settings)
 
-    try:
-        import boto3
-        kwargs: Dict[str, Any] = {"region_name": settings.aws_default_region}
-        if settings.aws_access_key_id:
-            kwargs["aws_access_key_id"]     = settings.aws_access_key_id
-            kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
-        if settings.aws_session_token:
-            kwargs["aws_session_token"] = settings.aws_session_token
+    import boto3
+    from api.services.aws_service import _boto3_client
+    from api.services.config import update_settings
 
-        sts  = boto3.client("sts", **kwargs)
+    # 1. Intentar primero con el cliente configurado
+    try:
+        sts = _boto3_client("sts", settings)
         resp = sts.get_caller_identity()
+        arn = resp.get("Arn", "")
+        source = "Rol IAM (LabRole / EC2 IMDS)" if ("role" in arn.lower() or "instance" in arn.lower()) else "Credenciales explícitas (.env)"
+        return {
+            "status":      "connected",
+            "auth_source": source,
+            "account":     resp.get("Account", ""),
+            "arn":         arn,
+            "region":      settings.aws_default_region,
+            "bucket":      settings.s3_bucket_name,
+            "glue_job":    settings.glue_job_name,
+            "athena_db":   settings.athena_database,
+            "workgroup":   settings.athena_workgroup,
+        }
+    except Exception as exc_first:
+        # 2. Si falló (token expirado), intentar auto-detección limpia con Boto3 default chain
+        try:
+            sts_auto = boto3.client("sts", region_name=settings.aws_default_region)
+            resp = sts_auto.get_caller_identity()
+            arn = resp.get("Arn", "")
+            source = "Rol IAM (LabRole / EC2 IMDS)" if ("role" in arn.lower() or "instance" in arn.lower()) else "AWS Credentials Chain"
+            
+            # Limpiar credenciales expiradas en memoria
+            update_settings(aws_access_key_id="auto", aws_secret_access_key="", aws_session_token="")
+
+            return {
+                "status":      "connected",
+                "auth_source": source,
+                "account":     resp.get("Account", ""),
+                "arn":         arn,
+                "region":      settings.aws_default_region,
+                "bucket":      settings.s3_bucket_name,
+                "glue_job":    settings.glue_job_name,
+                "athena_db":   settings.athena_database,
+                "workgroup":   settings.athena_workgroup,
+                "notice":      "Auto-detección activada: las credenciales anteriores expiraron.",
+            }
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"No se puede conectar con AWS: {str(exc_first)}",
+            )
+
+
+@router.post(
+    "/credentials/parse",
+    summary="Parsear y activar credenciales pegadas de AWS Learner Lab",
+    description=(
+        "Permite pegar el bloque completo de 'AWS Details' (ej: [default] aws_access_key_id=...). "
+        "Extrae las variables, valida la conexión con STS y actualiza la configuración en memoria y en .env."
+    ),
+)
+async def parse_and_apply_credentials(
+    request: RawCredentialsRequest,
+    _user: str = Depends(get_current_user),
+    settings: Settings = Depends(get_settings),
+):
+    import re
+    import os
+    import boto3
+    from api.services.config import update_settings
+
+    text = request.raw_credentials.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="El bloque de texto de credenciales está vacío.")
+
+    # Extraer con expresiones regulares tolerantes a [default], export KEY=val, o KEY=val
+    ak_match = re.search(r'(?:aws_access_key_id|AWS_ACCESS_KEY_ID)\s*=\s*["\']?([A-Za-z0-9_\-]+)["\']?', text)
+    sk_match = re.search(r'(?:aws_secret_access_key|AWS_SECRET_ACCESS_KEY)\s*=\s*["\']?([A-Za-z0-9/+=_\-]+)["\']?', text)
+    st_match = re.search(r'(?:aws_session_token|AWS_SESSION_TOKEN)\s*=\s*["\']?([A-Za-z0-9/+=_\-]+)["\']?', text)
+
+    if not ak_match or not sk_match:
+        raise HTTPException(
+            status_code=400,
+            detail="No se encontraron aws_access_key_id o aws_secret_access_key en el texto pegado."
+        )
+
+    ak = ak_match.group(1).strip()
+    sk = sk_match.group(1).strip()
+    stk = st_match.group(1).strip() if st_match else ""
+
+    # Validar inmediatamente contra AWS STS
+    try:
+        kwargs = {
+            "region_name": settings.aws_default_region,
+            "aws_access_key_id": ak,
+            "aws_secret_access_key": sk,
+        }
+        if stk:
+            kwargs["aws_session_token"] = stk
+        sts = boto3.client("sts", **kwargs)
+        resp = sts.get_caller_identity()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Credenciales inválidas o rechazadas por AWS STS: {str(exc)}"
+        )
+
+    # Actualizar configuración en caliente
+    update_settings(
+        app_mode="aws",
+        aws_access_key_id=ak,
+        aws_secret_access_key=sk,
+        aws_session_token=stk,
+    )
+
+    # Persistir en .env
+    env_file = os.path.join(str(settings.base_dir), ".env")
+    _persist_env_credentials(env_file, ak, sk, stk)
+
+    return {
+        "status": "success",
+        "message": "Credenciales detectadas, validadas y activadas exitosamente",
+        "account": resp.get("Account"),
+        "arn": resp.get("Arn"),
+    }
+
+
+@router.post(
+    "/auto-detect",
+    summary="Detectar automáticamente credenciales de AWS (IAM Role / IMDS / ~/.aws)",
+    description=(
+        "Intenta autenticarse sin credenciales fijas, usando la cadena estándar de AWS "
+        "(Rol IAM LabRole de EC2 o archivo ~/.aws/credentials del host)."
+    ),
+)
+async def auto_detect_credentials(
+    _user: str = Depends(get_current_user),
+    settings: Settings = Depends(get_settings),
+):
+    import os
+    import boto3
+    from api.services.config import update_settings
+
+    try:
+        sts = boto3.client("sts", region_name=settings.aws_default_region)
+        resp = sts.get_caller_identity()
+        arn = resp.get("Arn", "")
+        source = "Rol IAM (LabRole / EC2 IMDS)" if ("role" in arn.lower() or "instance" in arn.lower()) else "AWS Credentials Chain"
+
+        update_settings(
+            app_mode="aws",
+            aws_access_key_id="auto",
+            aws_secret_access_key="",
+            aws_session_token="",
+        )
+
+        env_file = os.path.join(str(settings.base_dir), ".env")
+        _persist_env_credentials(env_file, "auto", "", "")
 
         return {
-            "status":    "connected",
-            "account":   resp.get("Account", ""),
-            "arn":       resp.get("Arn", ""),
-            "region":    settings.aws_default_region,
-            "bucket":    settings.s3_bucket_name,
-            "glue_job":  settings.glue_job_name,
-            "athena_db": settings.athena_database,
-            "workgroup": settings.athena_workgroup,
+            "status": "success",
+            "message": f"Conexión automática exitosa mediante {source}",
+            "auth_source": source,
+            "account": resp.get("Account"),
+            "arn": arn,
         }
     except Exception as exc:
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"No se puede conectar con AWS: {str(exc)}",
+            status_code=503,
+            detail=f"No se detectaron credenciales automáticas en el entorno (IMDS/LabRole o ~/.aws): {str(exc)}"
         )
 
 

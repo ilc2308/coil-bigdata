@@ -32,22 +32,38 @@ from api.services.config import Settings
 
 def _boto3_client(service: str, settings: Settings):
     """
-    Crea un cliente boto3 con las credenciales del .env.
-    Soporta credenciales temporales del AWS Academy Learner Lab
-    (access_key + secret_key + session_token).
+    Crea un cliente boto3 con resolución y detección automática:
+    1. Si hay credenciales explícitas configuradas (y no son 'auto'):
+       Intenta usarlas.
+    2. Si están configuradas como 'auto' o vacías:
+       Usa la cadena de resolución estándar de AWS:
+       - Rol IAM de EC2 (Instance Metadata Service IMDS / LabRole)
+       - Archivo ~/.aws/credentials o ~/.aws/config
+       - Variables de entorno del sistema
+    3. Si las credenciales explícitas fallan o están vencidas, hace fallback automático a IMDS/boto3 default.
     """
     import boto3
 
-    kwargs: Dict[str, Any] = {"region_name": settings.aws_default_region}
+    region = settings.aws_default_region or "us-east-1"
+    explicit_key = (settings.aws_access_key_id or "").strip()
+    is_auto = explicit_key.lower() in ("auto", "none", "null", "")
 
-    if settings.aws_access_key_id:
-        kwargs["aws_access_key_id"]     = settings.aws_access_key_id
-        kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
+    if not is_auto:
+        kwargs: Dict[str, Any] = {
+            "region_name": region,
+            "aws_access_key_id": explicit_key,
+            "aws_secret_access_key": (settings.aws_secret_access_key or "").strip(),
+        }
+        if settings.aws_session_token and settings.aws_session_token.strip():
+            kwargs["aws_session_token"] = settings.aws_session_token.strip()
 
-    if settings.aws_session_token:
-        kwargs["aws_session_token"] = settings.aws_session_token
+        try:
+            return boto3.client(service, **kwargs)
+        except Exception:
+            pass
 
-    return boto3.client(service, **kwargs)
+    # Modo automático: Boto3 busca en IMDS (LabRole), ~/.aws/credentials o variables de entorno
+    return boto3.client(service, region_name=region)
 
 
 def _check_aws_mode(settings: Settings):

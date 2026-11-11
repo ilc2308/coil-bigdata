@@ -639,15 +639,9 @@ def list_uploaded_files(settings: Optional[Settings] = None) -> List[Dict]:
 # ---------------------------------------------------------------------------
 
 def _get_boto3_client(service: str, settings: Settings):
-    """Crea un cliente boto3 con las credenciales de .env."""
-    import boto3
-    kwargs: Dict[str, Any] = {"region_name": settings.aws_default_region}
-    if settings.aws_access_key_id:
-        kwargs["aws_access_key_id"] = settings.aws_access_key_id
-        kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
-    if settings.aws_session_token:
-        kwargs["aws_session_token"] = settings.aws_session_token
-    return boto3.client(service, **kwargs)
+    from api.services.aws_service import _boto3_client
+    return _boto3_client(service, settings)
+
 
 
 def upload_to_s3(local_path: str, s3_key: str, settings: Optional[Settings] = None) -> bool:

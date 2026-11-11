@@ -39,6 +39,7 @@ services:
     volumes:
       - ./api:/app/api
       - ./src:/app/src
+      - ./.env:/app/.env
       - ./dataset:/app/dataset:ro
       - coil_output:/app/output
       - coil_uploads:/app/uploads
@@ -80,6 +81,7 @@ services:
     volumes:
       - ./app:/app/app
       - ./src:/app/src
+      - ./.env:/app/.env
       - ./dataset:/app/dataset:ro
       - coil_output:/app/output
       - coil_uploads:/app/uploads

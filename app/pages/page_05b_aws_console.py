@@ -74,7 +74,7 @@ def render():
                 status_data = api_get("/api/v1/aws/status")
 
             if status_data and not status_data.get("detail"):
-                st.success("✅ **Conexión exitosa con AWS**")
+                st.success(f"✅ **Conexión exitosa con AWS** — Autenticado vía `{status_data.get('auth_source', 'AWS')}`")
                 c1, c2, c3 = st.columns(3)
                 c1.metric("Cuenta AWS", status_data.get("account", "N/A"))
                 c2.metric("Región", status_data.get("region", "us-east-1"))
@@ -84,18 +84,63 @@ def render():
                     st.code(f"Glue Job:    {status_data.get('glue_job', 'coil-glue-processor')}\n"
                             f"Athena DB:   {status_data.get('athena_db', 'coil_bigdata_salud_db')}\n"
                             f"WorkGroup:   {status_data.get('workgroup', 'primary')}\n"
-                            f"ARN:         {status_data.get('arn', 'N/A')}")
+                            f"ARN:         {status_data.get('arn', 'N/A')}\n"
+                            f"Origen Auth: {status_data.get('auth_source', 'N/A')}")
             else:
                 st.warning(
-                    "⚠️ No se pudo autenticar con AWS o el backend está en modo local. "
-                    "Si estás usando el AWS Academy Learner Lab, ingresa tus credenciales temporales abajo."
+                    "⚠️ No se pudo autenticar con AWS o las credenciales han expirado. "
+                    "Puedes usar la detección automática o pegar el bloque de credenciales abajo."
                 )
 
         st.divider()
 
+        # Opciones automáticas y de pegado rápido
+        st.markdown("#### ⚡ Detección y Carga Rápida de Credenciales (Learner Lab)")
+        col_quick1, col_quick2 = st.columns([1, 1])
+
+        with col_quick1:
+            st.markdown("##### 🤖 Opción 1: Auto-Detección (LabRole / IAM)")
+            st.caption(
+                "Si tu instancia EC2 tiene asignado el rol IAM **LabRole**, "
+                "AWS renueva las credenciales automáticamente sin que tengas que copiarlas nunca."
+            )
+            if st.button("✨ Auto-Detectar Credenciales IAM", type="primary", use_container_width=True):
+                with st.spinner("Detectando credenciales del entorno..."):
+                    res_auto = api_post("/api/v1/aws/auto-detect", {})
+                if res_auto and res_auto.get("status") == "success":
+                    st.success(f"✅ ¡{res_auto.get('message')}!\nARN: `{res_auto.get('arn')}`")
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.error(f"❌ {res_auto.get('detail') if res_auto else 'No se pudo auto-detectar rol IAM. Usa la Opción 2.'}")
+
+        with col_quick2:
+            st.markdown("##### 📋 Opción 2: Pegado Rápido en 1 Clic")
+            st.caption("Copia todo el bloque de **AWS Details → AWS CLI** y pégalo directo aquí:")
+            raw_creds = st.text_area(
+                "Pegar bloque completo de AWS Details",
+                height=110,
+                placeholder="[default]\naws_access_key_id=ASIA...\naws_secret_access_key=...\naws_session_token=IQoJ...",
+                label_visibility="collapsed"
+            )
+            if st.button("🚀 Parsear y Activar Bloque", use_container_width=True):
+                if not raw_creds.strip():
+                    st.warning("Pega el texto de credenciales primero.")
+                else:
+                    with st.spinner("Validando y activando credenciales en AWS..."):
+                        res_parse = api_post("/api/v1/aws/credentials/parse", {"raw_credentials": raw_creds.strip()})
+                    if res_parse and res_parse.get("status") == "success":
+                        st.success(f"✅ ¡{res_parse.get('message')}!\nCuenta: `{res_parse.get('account')}`")
+                        time.sleep(1)
+                        st.rerun()
+                    else:
+                        st.error(f"❌ Error: {res_parse.get('detail') if res_parse else 'No se pudo activar las credenciales'}")
+
+        st.divider()
+
         # Conmutador interactivo de modo
-        st.markdown("#### ⚡ Conmutador de Modo en Vivo (Local ⇄ AWS)")
-        st.caption("Cambia el modo de la aplicación y actualiza tus credenciales del AWS Academy Learner Lab sin reiniciar el servidor.")
+        st.markdown("#### ⚙️ Conmutador Manual de Modo y Parámetros (Avanzado)")
+        st.caption("Configura manualmente los nombres de buckets, regiones o claves individuales si es necesario.")
 
         with st.form("form_mode_switch"):
             col_m1, col_m2 = st.columns(2)
