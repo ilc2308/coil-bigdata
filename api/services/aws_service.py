@@ -34,14 +34,13 @@ def _boto3_client(service: str, settings: Settings):
     """
     Crea un cliente boto3 con resolución y detección automática:
     1. Si hay credenciales explícitas configuradas (y no son 'auto'):
-       Intenta usarlas.
+       Usa las claves explícitas pasadas en kwargs.
     2. Si están configuradas como 'auto' o vacías:
-       Usa la cadena de resolución estándar de AWS:
-       - Rol IAM de EC2 (Instance Metadata Service IMDS / LabRole)
-       - Archivo ~/.aws/credentials o ~/.aws/config
-       - Variables de entorno del sistema
-    3. Si las credenciales explícitas fallan o están vencidas, hace fallback automático a IMDS/boto3 default.
+       Limpia variables de entorno obsoletas para que Boto3 consulte
+       directamente el Rol IAM de EC2 (Instance Metadata Service IMDS / LabRole)
+       o ~/.aws/credentials.
     """
+    import os
     import boto3
 
     region = settings.aws_default_region or "us-east-1"
@@ -57,12 +56,12 @@ def _boto3_client(service: str, settings: Settings):
         if settings.aws_session_token and settings.aws_session_token.strip():
             kwargs["aws_session_token"] = settings.aws_session_token.strip()
 
-        try:
-            return boto3.client(service, **kwargs)
-        except Exception:
-            pass
+        return boto3.client(service, **kwargs)
 
-    # Modo automático: Boto3 busca en IMDS (LabRole), ~/.aws/credentials o variables de entorno
+    # Modo automático: limpiar variables fijas de os.environ para que boto3 use IMDS (LabRole)
+    os.environ.pop("AWS_ACCESS_KEY_ID", None)
+    os.environ.pop("AWS_SECRET_ACCESS_KEY", None)
+    os.environ.pop("AWS_SESSION_TOKEN", None)
     return boto3.client(service, region_name=region)
 
 

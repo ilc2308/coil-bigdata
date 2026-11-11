@@ -152,15 +152,21 @@ async def aws_status(
             "workgroup":   settings.athena_workgroup,
         }
     except Exception as exc_first:
-        # 2. Si falló (token expirado), intentar auto-detección limpia con Boto3 default chain
+        # 2. Si falló (token expirado), limpiar variables fijas de entorno e intentar con IAM Role / IMDS
         try:
+            import os
+            os.environ.pop("AWS_ACCESS_KEY_ID", None)
+            os.environ.pop("AWS_SECRET_ACCESS_KEY", None)
+            os.environ.pop("AWS_SESSION_TOKEN", None)
             sts_auto = boto3.client("sts", region_name=settings.aws_default_region)
             resp = sts_auto.get_caller_identity()
             arn = resp.get("Arn", "")
             source = "Rol IAM (LabRole / EC2 IMDS)" if ("role" in arn.lower() or "instance" in arn.lower()) else "AWS Credentials Chain"
             
-            # Limpiar credenciales expiradas en memoria
+            # Limpiar credenciales expiradas en memoria y persistir 'auto'
             update_settings(aws_access_key_id="auto", aws_secret_access_key="", aws_session_token="")
+            env_file = os.path.join(str(settings.base_dir), ".env")
+            _persist_env_credentials(env_file, "auto", "", "")
 
             return {
                 "status":      "connected",
@@ -272,6 +278,9 @@ async def auto_detect_credentials(
     from api.services.config import update_settings
 
     try:
+        os.environ.pop("AWS_ACCESS_KEY_ID", None)
+        os.environ.pop("AWS_SECRET_ACCESS_KEY", None)
+        os.environ.pop("AWS_SESSION_TOKEN", None)
         sts = boto3.client("sts", region_name=settings.aws_default_region)
         resp = sts.get_caller_identity()
         arn = resp.get("Arn", "")
